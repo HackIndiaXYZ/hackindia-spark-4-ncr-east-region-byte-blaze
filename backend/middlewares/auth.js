@@ -34,3 +34,48 @@ export const authenticateJWT = (req, res, next) => {
     next();
   });
 };
+
+/**
+ * Middleware to check if user has admin role
+ * Must be used after authenticateJWT
+ */
+export const requireAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ 
+      success: false,
+      error: 'Authentication required' 
+    });
+  }
+  
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ 
+      success: false,
+      error: 'Admin access required' 
+    });
+  }
+  
+  next();
+};
+
+/**
+ * Optional: Middleware to check if user has any of specified roles
+ */
+export const requireRole = (allowedRoles = []) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Authentication required' 
+      });
+    }
+    
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        success: false,
+        error: `Access denied. Required role: ${allowedRoles.join(' or ')}` 
+      });
+    }
+    
+    next();
+  };
+};

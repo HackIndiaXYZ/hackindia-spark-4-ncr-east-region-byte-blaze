@@ -342,3 +342,37 @@ export async function getPolicyById(policyId) {
     throw error;
   }
 }
+
+/**
+ * Get user by ID
+ */
+export async function getUserById(userId) {
+  try {
+    const result = await pool.query(
+      `SELECT id, email, wallet_address, role, created_at, updated_at FROM users WHERE id = $1`,
+      [userId]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error('Error fetching user by ID:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Get total payout balance for a user (sum of all successful payouts)
+ */
+export async function getUserPayoutBalance(userId) {
+  try {
+    const result = await pool.query(
+      `SELECT COALESCE(SUM(payout_amount), 0) as total_payout 
+       FROM purchases 
+       WHERE user_id = $1 AND status = 'approved' AND payout_amount > 0`,
+      [userId]
+    );
+    return result.rows[0]?.total_payout || 0;
+  } catch (error) {
+    console.error('Error fetching user payout balance:', error.message);
+    throw error;
+  }
+}

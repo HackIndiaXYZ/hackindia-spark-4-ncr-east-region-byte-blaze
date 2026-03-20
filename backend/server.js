@@ -5,7 +5,8 @@ import authRoutes from './routes/authRoutes.js';
 import policyRoutes from './routes/policyRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-import { initializeWeatherMonitoring } from './controllers/adminController.js';
+import { initializeWeatherMonitoring, initializeBlockchainMonitoring } from './controllers/adminController.js';
+import * as blockchainService from './utils/blockchainService.js';
 
 dotenv.config();
 
@@ -66,8 +67,19 @@ app.use((err, req, res, next) => {
 
 // ==================== SERVER STARTUP ====================
 
-app.listen(PORT, () => {
-  console.log(`
+// Validate required environment variables
+const requiredEnvVars = ['JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+if (missingEnvVars.length > 0) {
+  console.error(`❌ Missing required environment variables: ${missingEnvVars.join(', ')}`);
+  process.exit(1);
+}
+
+// Start server with async initialization
+async function startServer() {
+  return new Promise((resolve) => {
+    app.listen(PORT, async () => {
+      console.log(`
 🚀 InsuChain Backend Server
 ===========================
 🌐 Server running on http://localhost:${PORT}
@@ -94,10 +106,33 @@ API Endpoints:
 
 ✨ Ready to accept requests!
 ==========================
-  `);
+      `);
 
-  // Initialize weather monitoring scheduled task
-  // initializeWeatherMonitoring();
+      // Initialize blockchain service with contract
+      console.log('\n⛓️  Initializing blockchain service...');
+      const blockchainReady = await blockchainService.initializeBlockchain();
+      
+      if (blockchainReady) {
+        console.log('✅ Blockchain service initialized successfully\n');
+        
+        // Initialize blockchain monitoring scheduled task
+        initializeBlockchainMonitoring();
+      } else {
+        console.warn('⚠️  Blockchain service initialization failed - blockchain features may not work\n');
+      }
+
+      // Initialize weather monitoring scheduled task (currently disabled)
+      // initializeWeatherMonitoring();
+      
+      resolve();
+    });
+  });
+}
+
+// Start the server
+startServer().catch(err => {
+  console.error('❌ Failed to start server:', err);
+  process.exit(1);
 });
 
 export default app;
