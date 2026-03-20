@@ -224,7 +224,7 @@ export async function createUserWithPassword(email, passwordHash, role = 'farmer
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (email) DO UPDATE
        SET updated_at = CURRENT_TIMESTAMP
-       RETURNING id, email, role, wallet_address, created_at`,
+       RETURNING id, email, password_hash, role, wallet_address, created_at`,
       [email, passwordHash, role, walletAddress ? walletAddress.toLowerCase() : null]
     );
     return result.rows[0];
@@ -339,6 +339,24 @@ export async function getPolicyById(policyId) {
     return result.rows[0] || null;
   } catch (error) {
     console.error('Error fetching policy:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Get user's total payout balance
+ */
+export async function getUserPayoutBalance(userId) {
+  try {
+    const result = await pool.query(
+      `SELECT COALESCE(SUM(payout_amount), 0) as total_payout
+       FROM purchases
+       WHERE user_id = $1 AND payout_triggered = true`,
+      [userId]
+    );
+    return result.rows[0]?.total_payout || '0';
+  } catch (error) {
+    console.error('Error fetching user payout balance:', error.message);
     throw error;
   }
 }

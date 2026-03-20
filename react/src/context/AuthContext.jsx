@@ -33,7 +33,8 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await authAPI.register(email, password, role, walletAddress);
 
-      const { token: newToken, user: newUser } = response.data;
+      // response is the full payload (success, data, message) because interceptor returns response.data
+      const { data: { token: newToken, user: newUser } } = response;
 
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
@@ -54,7 +55,8 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await authAPI.login(email, password);
 
-      const { token: newToken, user: newUser } = response.data;
+      // response is the full payload (success, data, message) because interceptor returns response.data
+      const { data: { token: newToken, user: newUser } } = response;
 
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
