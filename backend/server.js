@@ -1,11 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-// import authRoutes from './routes/authRoutes.js';
-// import policyRoutes from './routes/policyRoutes.js';
-// import userRoutes from './routes/userRoutes.js';
-// import adminRoutes from './routes/adminRoutes.js';
-// import { initializeWeatherMonitoring } from './controllers/adminController.js';
+import authRoutes from './routes/authRoutes.js';
+import policyRoutes from './routes/policyRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import { initializeWeatherMonitoring } from './controllers/adminController.js';
 
 dotenv.config();
 
@@ -22,12 +22,16 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ==================== REQUEST LOGGER ====================
 
 app.use((req, res, next) => {
   console.log(`📨 ${req.method} ${req.path}`);
   next();
 });
 
+// ==================== ROUTES ====================
+
+// Health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -36,10 +40,10 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
-// app.use('/api/auth', authRoutes);
-// app.use('/api/policies', policyRoutes);
-// app.use('/api/users', userRoutes);
-// app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/policies', policyRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ==================== ERROR HANDLING ====================
 
@@ -60,6 +64,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+// ==================== SERVER STARTUP ====================
 
 app.listen(PORT, () => {
   console.log(`

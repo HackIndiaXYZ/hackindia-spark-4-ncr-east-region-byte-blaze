@@ -6,9 +6,6 @@ import Contact from "./pages/Contact";
 import Reviews from "./pages/Reviews";
 import FAQ from "./pages/FAQ";
 
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-
 function App() {
   return (
     <Router>
