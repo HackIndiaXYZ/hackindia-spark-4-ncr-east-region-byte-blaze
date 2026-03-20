@@ -346,7 +346,7 @@ export async function getPolicyById(policyId) {
 
 export async function getUserPayoutBalance(userId) {
   try {
-    const result = await pool.query(
+    const result = await pool.query;
   } catch (error) {
     console.error('Error fetching user payout balance:', error.message);
     throw error;

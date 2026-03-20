@@ -1,4 +1,5 @@
 const hre = require("hardhat");
+const { ethers } = hre;
 const fs = require("fs");
 const path = require("path");
 
@@ -14,7 +15,14 @@ async function main() {
     // Get deployer account
     const [deployer] = await ethers.getSigners();
     console.log(`📝 Deploying with account: ${deployer.address}`);
-    console.log(`💰 Account balance: ${(await deployer.getBalance()).toString()} wei\n`);
+
+    // Get balance via provider (Signer#getBalance is not available in v6)
+    const balance = await ethers.provider.getBalance(deployer.address);
+    console.log(
+      `💰 Account balance: ${balance.toString()} wei (${ethers.formatEther(
+        balance
+      )} ETH)\n`
+    );
 
     // Compile contracts
     console.log("📦 Compiling contracts...");
@@ -30,9 +38,13 @@ async function main() {
     console.log(`✅ Insurance contract deployed at: ${insuranceAddress}\n`);
 
     // Get deployment details
-    const deploymentBlock = await ethers.provider.getBlockNumber();
+    const deploymentBlockRaw = await ethers.provider.getBlockNumber();
     const network = hre.network.name;
-    const chainId = (await ethers.provider.getNetwork()).chainId;
+    const networkInfo = await ethers.provider.getNetwork();
+
+    const deploymentBlock = Number(deploymentBlockRaw);
+
+    const chainId = Number(networkInfo.chainId);
 
     console.log("📊 Deployment Details:");
     console.log(`   Network: ${network}`);
@@ -44,10 +56,10 @@ async function main() {
     // Save deployment info
     const deploymentInfo = {
       network,
-      chainId,
+      chainId, // now a number
       contractAddress: insuranceAddress,
       deployerAddress: deployer.address,
-      deploymentBlock,
+      deploymentBlock, // now a number
       deploymentTimestamp: new Date().toISOString(),
       deploymentRPC: process.env.RPC_URL || "https://rpc-amoy.polygon.technology",
     };
@@ -58,17 +70,20 @@ async function main() {
     console.log(`💾 Deployment info saved to: deployment-info.json\n`);
 
     // Get contract ABI and save it
-    const artifactsPath = path.join(__dirname, "../artifacts/contracts/Insurance.sol/Insurance.json");
+    const artifactsPath = path.join(
+      __dirname,
+      "../artifacts/contracts/Insurance.sol/Insurance.json"
+    );
     if (fs.existsSync(artifactsPath)) {
       const artifact = JSON.parse(fs.readFileSync(artifactsPath, "utf8"));
       const abiPath = path.join(__dirname, "../abi/Insurance.json");
-      
+
       // Create abi directory if it doesn't exist
       const abiDir = path.dirname(abiPath);
       if (!fs.existsSync(abiDir)) {
         fs.mkdirSync(abiDir, { recursive: true });
       }
-      
+
       fs.writeFileSync(abiPath, JSON.stringify(artifact.abi, null, 2));
       console.log(`📄 Contract ABI saved to: abi/Insurance.json\n`);
     }
@@ -77,10 +92,12 @@ async function main() {
     console.log("🔍 Verifying contract...");
     const owner = await insurance.owner();
     console.log(`   Owner: ${owner}`);
-    console.log(`   Initial Balance: ${(await insurance.getContractBalance()).toString()} wei\n`);
+    console.log(
+      `   Initial Balance: ${(await insurance.getContractBalance()).toString()} wei\n`
+    );
 
     console.log("✅ ✅ ✅ Deployment completed successfully! ✅ ✅ ✅\n");
-    
+
     console.log("🌐 View on Polygonscan:");
     console.log(`   https://amoy.polygonscan.com/address/${insuranceAddress}\n`);
 
@@ -91,7 +108,6 @@ async function main() {
     console.log("   4. Update your frontend with the contract address\n");
 
     return insuranceAddress;
-
   } catch (error) {
     console.error("❌ Deployment failed!");
     console.error(error);
