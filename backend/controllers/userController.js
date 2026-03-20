@@ -7,18 +7,24 @@ export async function registerUser(req, res) {
   try {
     const { walletAddress, email } = req.body;
 
-    if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+    if (!walletAddress) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid wallet address',
+        error: 'Wallet address required',
       });
     }
 
-    const user = await db.createUser(walletAddress, 'farmer', email);
+    const normalizedAddress = walletAddress.toLowerCase();
+    const user = await db.createUser(normalizedAddress, 'farmer', email);
 
     res.json({
       success: true,
-      data: user,
+      data: {
+        id: user.id,
+        walletAddress: user.wallet_address,
+        email: user.email,
+        role: user.role,
+      },
       message: 'User registered/retrieved successfully',
     });
   } catch (error) {
@@ -36,6 +42,14 @@ export async function registerUser(req, res) {
 export async function getUserProfile(req, res) {
   try {
     const walletAddress = req.walletAddress;
+
+    if (!walletAddress) {
+      return res.status(401).json({
+        success: false,
+        error: 'Wallet address not found in token',
+      });
+    }
+
     const user = await db.getUserByWallet(walletAddress);
 
     if (!user) {
@@ -47,7 +61,14 @@ export async function getUserProfile(req, res) {
 
     res.json({
       success: true,
-      data: user,
+      data: {
+        id: user.id,
+        walletAddress: user.wallet_address,
+        email: user.email,
+        role: user.role,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at,
+      },
     });
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -64,6 +85,14 @@ export async function getUserProfile(req, res) {
 export async function getUserTransactions(req, res) {
   try {
     const walletAddress = req.walletAddress;
+
+    if (!walletAddress) {
+      return res.status(401).json({
+        success: false,
+        error: 'Wallet address not found in token',
+      });
+    }
+
     const user = await db.getUserByWallet(walletAddress);
 
     if (!user) {
@@ -78,6 +107,7 @@ export async function getUserTransactions(req, res) {
     res.json({
       success: true,
       data: transactions,
+      count: transactions.length,
     });
   } catch (error) {
     console.error('Error fetching transactions:', error);
@@ -94,6 +124,14 @@ export async function getUserTransactions(req, res) {
 export async function getUserPurchases(req, res) {
   try {
     const walletAddress = req.walletAddress;
+
+    if (!walletAddress) {
+      return res.status(401).json({
+        success: false,
+        error: 'Wallet address not found in token',
+      });
+    }
+
     const user = await db.getUserByWallet(walletAddress);
 
     if (!user) {
@@ -108,6 +146,7 @@ export async function getUserPurchases(req, res) {
     res.json({
       success: true,
       data: purchases,
+      count: purchases.length,
     });
   } catch (error) {
     console.error('Error fetching purchases:', error);

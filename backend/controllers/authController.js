@@ -36,10 +36,61 @@ export async function adminLogin(req, res) {
         email,
         role: 'admin',
       },
-      message: 'Login successful',
+      message: 'Admin login successful',
     });
   } catch (error) {
-    console.error('Error during login:', error);
+    console.error('Error during admin login:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Login failed',
+    });
+  }
+}
+
+export async function farmerLogin(req, res) {
+  try {
+    const { walletAddress, email } = req.body;
+
+    if (!walletAddress) {
+      return res.status(400).json({
+        success: false,
+        error: 'Wallet address required',
+      });
+    }
+
+    // Normalize wallet address
+    const normalizedAddress = walletAddress.toLowerCase();
+
+    // Register or get user by wallet
+    const user = await db.createUser(normalizedAddress, 'farmer', email);
+
+    // Generate JWT token with wallet address
+    const token = jwt.sign(
+      { 
+        walletAddress: normalizedAddress, 
+        role: 'farmer',
+        userId: user.id,
+        iat: Math.floor(Date.now() / 1000) 
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      data: {
+        token,
+        user: {
+          id: user.id,
+          walletAddress: user.wallet_address,
+          email: user.email,
+          role: user.role,
+        },
+      },
+      message: 'Farmer login successful',
+    });
+  } catch (error) {
+    console.error('Error during farmer login:', error);
     res.status(500).json({
       success: false,
       error: 'Login failed',

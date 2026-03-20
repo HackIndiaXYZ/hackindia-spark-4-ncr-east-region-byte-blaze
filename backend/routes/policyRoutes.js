@@ -1,15 +1,16 @@
 import express from 'express';
-import { authenticateWallet } from '../middleware/auth.js';
+import { authenticateJWT } from '../middlewares/auth.js';
 import * as policyController from '../controllers/policyController.js';
 
 const router = express.Router();
 
+// Public routes
 router.get('/', policyController.getPolicies);
-
 router.get('/:policyId', policyController.getPolicy);
 
-router.get('/user/mypolicies', authenticateWallet, policyController.getUserPolicies);
-
-router.get('/user/payout', authenticateWallet, policyController.getPayoutBalance);
+// Protected routes (farmers only)
+router.get('/user/mypolicies', authenticateJWT, policyController.getUserPolicies);
+router.get('/user/payout', authenticateJWT, policyController.getPayoutBalance);
+router.post('/purchase/:policyId', authenticateJWT, policyController.purchasePolicy);
 
 export default router;

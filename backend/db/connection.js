@@ -7,7 +7,6 @@ const { Pool } = pg;
 
 const pool = new Pool({
   connectionString: "postgresql://neondb_owner:npg_2YhzpeSPmn1X@ep-royal-thunder-amri5u5a-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
 pool.on('error', (err) => {
