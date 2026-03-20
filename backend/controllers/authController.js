@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import * as db from '../models/database.js';
+import { validateRegistrationInput, validateLoginInput } from '../utils/validation.js';
 
 /**
  * Unified Register endpoint for both Admin and Farmer
@@ -9,17 +10,12 @@ export async function register(req, res) {
   try {
     const { email, password, role = 'farmer', walletAddress } = req.body;
 
-    if (!email || !password || !role) {
+    // Validate input
+    const validation = validateRegistrationInput({ email, password, role, walletAddress });
+    if (!validation.isValid) {
       return res.status(400).json({
         success: false,
-        error: 'Email, password, and role required',
-      });
-    }
-
-    if (!['farmer', 'admin'].includes(role)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Role must be farmer or admin',
+        errors: validation.errors,
       });
     }
 
@@ -80,10 +76,12 @@ export async function login(req, res) {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    // Validate input
+    const validation = validateLoginInput({ email, password });
+    if (!validation.isValid) {
       return res.status(400).json({
         success: false,
-        error: 'Email and password required',
+        errors: validation.errors,
       });
     }
 

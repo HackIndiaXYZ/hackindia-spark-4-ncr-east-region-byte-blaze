@@ -343,18 +343,10 @@ export async function getPolicyById(policyId) {
   }
 }
 
-/**
- * Get user's total payout balance
- */
+
 export async function getUserPayoutBalance(userId) {
   try {
     const result = await pool.query(
-      `SELECT COALESCE(SUM(payout_amount), 0) as total_payout
-       FROM purchases
-       WHERE user_id = $1 AND payout_triggered = true`,
-      [userId]
-    );
-    return result.rows[0]?.total_payout || '0';
   } catch (error) {
     console.error('Error fetching user payout balance:', error.message);
     throw error;

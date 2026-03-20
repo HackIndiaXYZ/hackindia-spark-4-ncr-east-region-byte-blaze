@@ -1,0 +1,34 @@
+{
+  "name": "insuchan-blockchain",
+  "version": "1.0.0",
+  "description": "Blockchain module for InsuChain Parametric Weather Insurance",
+  "main": "scripts/deploy.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.js --network amoy",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "test": "hardhat test",
+    "node": "hardhat node"
+  },
+  "keywords": [
+    "blockchain",
+    "insurance",
+    "polygon",
+    "smart-contract"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "hardhat": "^2.14.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.4",
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.2",
+    "chai": "^4.3.7",
+    "ethers": "^6.7.1",
+    "dotenv": "^16.3.1"
+  },
+  "dependencies": {
+    "ethers": "^6.7.1",
+    "dotenv": "^16.3.1"
+  }
+}

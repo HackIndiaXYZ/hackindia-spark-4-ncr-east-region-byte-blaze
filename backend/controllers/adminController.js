@@ -1,6 +1,7 @@
 import * as db from '../models/database.js';
 import { fetchWeatherData, storeWeatherData } from '../utils/weatherAPI.js';
 import cron from 'node-cron';
+import * as blockchainService from '../utils/blockchainService.js';
 
 export async function createPolicy(req, res) {
   try {
@@ -222,4 +223,103 @@ export async function initializeWeatherMonitoring() {
       console.error('Error in weather monitoring:', error);
     }
   });
+}
+
+/**
+ * Initialize blockchain payout monitoring (scheduled task)
+ * Runs every hour to check weather data and trigger payouts on blockchain
+ */
+export async function initializeBlockchainMonitoring() {
+  // Run blockchain payout check every hour
+  cron.schedule('0 * * * *', async () => {
+    try {
+      console.log('\n⛓️  Running scheduled blockchain payout check...');
+      console.log('⏰ Time:', new Date().toISOString());
+
+      // Initialize blockchain service if not already done
+      const isInitialized = await blockchainService.initializeBlockchain();
+      if (!isInitialized) {
+        console.warn('⚠️  Blockchain service not initialized, skipping this cycle');
+        return;
+      }
+
+      // Get all active farmers from blockchain
+      const activeFarmers = await blockchainService.getActiveFarmersFromChain();
+      console.log(`📋 Found ${activeFarmers.length} active farmers on blockchain\n`);
+
+      if (activeFarmers.length === 0) {
+        console.log('✅ No active policies to check');
+        return;
+      }
+
+      // Get contract stats
+      const stats = await blockchainService.getContractStats();
+      console.log('📊 Contract Statistics:');
+      console.log(`   Total Policies: ${stats.totalPoliciesSold}`);
+      console.log(`   Total Payouts: ${stats.totalPayoutsTriggered}`);
+      console.log(`   Contract Balance: ${stats.contractBalance} MATIC\n`);
+
+      // Check weather for each farmer and trigger payouts
+      let payoutsTriggered = 0;
+      let payoutsFailed = 0;
+
+      for (const farmerAddress of activeFarmers) {
+        try {
+          // Get farmer's policy from blockchain
+          const policy = await blockchainService.getPolicyFromChain(farmerAddress);
+          
+          // Skip if already claimed
+          if (policy.payoutClaimed) {
+            console.log(`⏭️  Farmer ${farmerAddress.slice(0, 6)}... already claimed payout`);
+            continue;
+          }
+
+          // Get latest weather data
+          // In a real scenario, you would fetch the user's location from database
+          // For now, using a default location - update this based on your actual setup
+          const latestWeather = await fetchWeatherData(28.6139, 77.2090); // Delhi coordinates as example
+          
+          console.log(`\n🌡️  Latest Weather Data:`);
+          console.log(`   Location: ${latestWeather.location}`);
+          console.log(`   Rainfall: ${latestWeather.rainfall} mm`);
+          console.log(`   Threshold: ${policy.rainfallThreshold} mm`);
+
+          // Check if rainfall exceeds threshold
+          if (latestWeather.rainfall >= policy.rainfallThreshold) {
+            console.log(`✅ Rainfall threshold met! Triggering payout...`);
+            
+            try {
+              const result = await blockchainService.triggerPayoutOnChain(
+                farmerAddress,
+                latestWeather.rainfall
+              );
+              
+              if (result) {
+                payoutsTriggered++;
+                console.log(`✅ Payout triggered successfully!`);
+              }
+            } catch (error) {
+              payoutsFailed++;
+              console.error(`❌ Failed to trigger payout: ${error.message}`);
+            }
+          } else {
+            console.log(`⚠️  Rainfall below threshold, no payout triggered`);
+          }
+        } catch (error) {
+          payoutsFailed++;
+          console.error(`❌ Error processing farmer ${farmerAddress}: ${error.message}`);
+        }
+      }
+
+      console.log(`\n✅ Blockchain payout check completed`);
+      console.log(`   Payouts Triggered: ${payoutsTriggered}`);
+      console.log(`   Failed: ${payoutsFailed}`);
+      console.log(`   Total Checked: ${activeFarmers.length}\n`);
+
+    } catch (error) {
+      console.error('❌ Error in blockchain monitoring:', error.message);
+    }
+  });
+
+  console.log('✅ Blockchain monitoring job scheduled (runs every hour)');
 }
