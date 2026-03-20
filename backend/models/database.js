@@ -224,7 +224,7 @@ export async function createUserWithPassword(email, passwordHash, role = 'farmer
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (email) DO UPDATE
        SET updated_at = CURRENT_TIMESTAMP
-       RETURNING id, email, role, wallet_address, created_at`,
+       RETURNING id, email, password_hash, role, wallet_address, created_at`,
       [email, passwordHash, role, walletAddress ? walletAddress.toLowerCase() : null]
     );
     return result.rows[0];
@@ -343,34 +343,10 @@ export async function getPolicyById(policyId) {
   }
 }
 
-/**
- * Get user by ID
- */
-export async function getUserById(userId) {
-  try {
-    const result = await pool.query(
-      `SELECT id, email, wallet_address, role, created_at, updated_at FROM users WHERE id = $1`,
-      [userId]
-    );
-    return result.rows[0] || null;
-  } catch (error) {
-    console.error('Error fetching user by ID:', error.message);
-    throw error;
-  }
-}
 
-/**
- * Get total payout balance for a user (sum of all successful payouts)
- */
 export async function getUserPayoutBalance(userId) {
   try {
     const result = await pool.query(
-      `SELECT COALESCE(SUM(payout_amount), 0) as total_payout 
-       FROM purchases 
-       WHERE user_id = $1 AND status = 'approved' AND payout_amount > 0`,
-      [userId]
-    );
-    return result.rows[0]?.total_payout || 0;
   } catch (error) {
     console.error('Error fetching user payout balance:', error.message);
     throw error;
