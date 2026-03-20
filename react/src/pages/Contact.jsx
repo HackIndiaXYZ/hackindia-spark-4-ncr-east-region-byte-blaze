@@ -108,7 +108,7 @@ const Contact = () => {
                 <h4>📍 Office Address</h4>
                 <p>
                   InsuChain Headquarters<br />
-                  123 Blockchain Avenue<br />
+                  123 BlockchaiAvenue<br />
                   Tech City, TC 12345<br />
                   India
                 </p>
