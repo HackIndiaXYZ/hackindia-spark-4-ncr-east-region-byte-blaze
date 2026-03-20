@@ -1,4 +1,5 @@
 import pool from './connection.js';
+import * as db from '../models/database.js';
 
 /**
  * Create all necessary tables for InsuChain
@@ -13,9 +14,10 @@ async function migrate() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        wallet_address VARCHAR(255) UNIQUE NOT NULL,
+        wallet_address VARCHAR(255) UNIQUE,
+        email VARCHAR(255) UNIQUE,
+        password_hash VARCHAR(255),
         role VARCHAR(20) DEFAULT 'farmer', -- 'farmer' or 'admin'
-        email VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
@@ -112,12 +114,20 @@ async function migrate() {
     `);
     console.log('✅ Indexes created');
 
+    // Release client before seeding
+    client.release();
+
+    // Seed policies
+    await db.seedPolicies();
+
     console.log('✨ Migration completed successfully!');
   } catch (error) {
     console.error('❌ Migration failed:', error.message);
     throw error;
   } finally {
-    client.release();
+    try {
+      if (client) client.release();
+    } catch (_) {}
     await pool.end();
   }
 }

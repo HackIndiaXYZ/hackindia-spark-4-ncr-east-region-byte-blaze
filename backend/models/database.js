@@ -1,5 +1,7 @@
 import pool from '../db/connection.js';
 
+export { pool };
+
 /**
  * Create a new user in database
  */
@@ -208,6 +210,135 @@ export async function getUserTransactions(userId) {
     return result.rows;
   } catch (error) {
     console.error('Error fetching user transactions:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Create user with email and password
+ */
+export async function createUserWithPassword(email, passwordHash, role = 'farmer', walletAddress = null) {
+  try {
+    const result = await pool.query(
+      `INSERT INTO users (email, password_hash, role, wallet_address)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (email) DO UPDATE
+       SET updated_at = CURRENT_TIMESTAMP
+       RETURNING id, email, role, wallet_address, created_at`,
+      [email, passwordHash, role, walletAddress ? walletAddress.toLowerCase() : null]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error creating user with password:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Get user by email
+ */
+export async function getUserByEmail(email) {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM users WHERE email = LOWER($1)`,
+      [email]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error('Error fetching user by email:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Update user wallet address
+ */
+export async function updateUserWallet(userId, walletAddress) {
+  try {
+    const result = await pool.query(
+      `UPDATE users SET wallet_address = LOWER($1), updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING *`,
+      [walletAddress, userId]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error('Error updating user wallet:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Seed policies data
+ */
+export async function seedPolicies() {
+  try {
+    const policies = [
+      { name: 'Rainfall Insurance Basic', premium: 50000000000000000, payout: 500000000000000000, rainfall_threshold: 100, temp_min: -10, temp_max: 40 },
+      { name: 'Severe Rainfall Protection', premium: 75000000000000000, payout: 750000000000000000, rainfall_threshold: 80, temp_min: -10, temp_max: 40 },
+      { name: 'Extreme Weather Coverage', premium: 100000000000000000, payout: 1000000000000000000, rainfall_threshold: 50, temp_min: -20, temp_max: 50 },
+      { name: 'Monsoon Shield', premium: 60000000000000000, payout: 600000000000000000, rainfall_threshold: 120, temp_min: -5, temp_max: 45 },
+      { name: 'Frost Protection Plan', premium: 55000000000000000, payout: 550000000000000000, rainfall_threshold: 150, temp_min: -30, temp_max: 10 },
+      { name: 'Heat Wave Insurance', premium: 65000000000000000, payout: 650000000000000000, rainfall_threshold: 180, temp_min: 30, temp_max: 50 },
+      { name: 'Comprehensive Farm Shield', premium: 120000000000000000, payout: 1200000000000000000, rainfall_threshold: 40, temp_min: -25, temp_max: 55 },
+      { name: 'Drought Mitigation Plan', premium: 70000000000000000, payout: 700000000000000000, rainfall_threshold: 200, temp_min: 20, temp_max: 60 },
+      { name: 'Hailstorm Coverage', premium: 80000000000000000, payout: 800000000000000000, rainfall_threshold: 90, temp_min: -15, temp_max: 35 },
+      { name: 'Flood Protection Premium', premium: 90000000000000000, payout: 900000000000000000, rainfall_threshold: 60, temp_min: -10, temp_max: 45 },
+      { name: 'Seasonal Weather Guard', premium: 85000000000000000, payout: 850000000000000000, rainfall_threshold: 110, temp_min: -20, temp_max: 48 },
+      { name: 'Year-Round Farmer\'s Plan', premium: 110000000000000000, payout: 1100000000000000000, rainfall_threshold: 75, temp_min: -25, temp_max: 50 },
+      { name: 'Premium Plus Coverage', premium: 130000000000000000, payout: 1300000000000000000, rainfall_threshold: 45, temp_min: -30, temp_max: 55 },
+      { name: 'Elite Protection Package', premium: 150000000000000000, payout: 1500000000000000000, rainfall_threshold: 30, temp_min: -35, temp_max: 60 },
+    ];
+
+    for (const policy of policies) {
+      await pool.query(
+        `INSERT INTO policies (name, premium, payout, rainfall_threshold, temperature_min, temperature_max, active)
+         VALUES ($1, $2, $3, $4, $5, $6, true)
+         ON CONFLICT DO NOTHING`,
+        [policy.name, policy.premium, policy.payout, policy.rainfall_threshold, policy.temp_min, policy.temp_max]
+      );
+    }
+    
+    console.log('✅ Policies seeded successfully');
+    return true;
+  } catch (error) {
+    console.error('Error seeding policies:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Get all policies from database
+ */
+export async function getAllPolicies() {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, premium, payout, rainfall_threshold, temperature_min, temperature_max, active, created_at
+       FROM policies
+       WHERE active = true
+       ORDER BY created_at DESC`
+    );
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching policies:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Get a specific policy by ID from database
+ */
+export async function getPolicyById(policyId) {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, premium, payout, rainfall_threshold, temperature_min, temperature_max, active, created_at
+       FROM policies
+       WHERE id = $1`,
+      [policyId]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error('Error fetching policy:', error.message);
     throw error;
   }
 }

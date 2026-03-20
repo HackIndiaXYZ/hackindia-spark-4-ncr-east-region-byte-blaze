@@ -19,12 +19,16 @@ export const authenticateJWT = (req, res, next) => {
       });
     }
     
+    // Store decoded JWT in request for use in controllers
+    req.user = decoded;
+    req.userId = decoded.id;
+    req.userEmail = decoded.email;
+    req.userRole = decoded.role;
+    req.walletAddress = decoded.walletAddress;
+    
+    // Set admin flag if needed
     if (decoded.role === 'admin') {
-      req.user = decoded;
       req.isAdmin = true;
-    } else if (decoded.role === 'farmer') {
-      req.walletAddress = decoded.walletAddress;
-      req.user = decoded;
     }
     
     next();

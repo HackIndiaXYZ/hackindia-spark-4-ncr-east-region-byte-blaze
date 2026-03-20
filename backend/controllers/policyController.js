@@ -1,4 +1,3 @@
-import { contractManager } from '../utils/contractManager.js';
 import * as db from '../models/database.js';
 
 /**
@@ -6,7 +5,7 @@ import * as db from '../models/database.js';
  */
 export async function getPolicies(req, res) {
   try {
-    const policies = await contractManager.getAllPolicies();
+    const policies = await db.getAllPolicies();
     res.json({
       success: true,
       data: policies,
@@ -27,7 +26,21 @@ export async function getPolicies(req, res) {
 export async function getPolicy(req, res) {
   try {
     const { policyId } = req.params;
-    const policy = await contractManager.contract.getPolicy(policyId);
+    if (!policyId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Policy ID required',
+      });
+    }
+    const policy = await db.getPolicyById(policyId);
+    
+    if (!policy) {
+      return res.status(404).json({
+        success: false,
+        error: 'Policy not found',
+      });
+    }
+    
     res.json({
       success: true,
       data: policy,
@@ -46,29 +59,21 @@ export async function getPolicy(req, res) {
  */
 export async function getUserPolicies(req, res) {
   try {
-    const walletAddress = req.walletAddress;
+    const userId = req.userId;
     
-    if (!walletAddress) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
-        error: 'Wallet address not found in token',
+        error: 'User ID not found in token',
       });
     }
     
-    // Get from contract
-    const contractPolicies = await contractManager.getUserPolicies(walletAddress);
-    
-    // Get from database for additional info
-    const user = await db.getUserByWallet(walletAddress);
-    const dbPurchases = user ? await db.getUserPurchases(user.id) : [];
+    const purchases = await db.getUserPurchases(userId);
 
     res.json({
       success: true,
-      data: {
-        contractPolicies,
-        purchases: dbPurchases,
-      },
-      count: dbPurchases.length,
+      data: purchases,
+      count: purchases.length,
     });
   } catch (error) {
     console.error('Error fetching user policies:', error);
@@ -84,23 +89,26 @@ export async function getUserPolicies(req, res) {
  */
 export async function getPayoutBalance(req, res) {
   try {
-    const walletAddress = req.walletAddress;
+    const userId = req.userId;
 
-    if (!walletAddress) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
-        error: 'Wallet address not found in token',
+        error: 'User ID not found in token',
       });
     }
 
-    const balance = await contractManager.getPayoutBalance(walletAddress);
+    // Use model method instead of raw query
+    const totalPayoutWei = await db.getUserPayoutBalance(userId);
     
+    const totalPayoutETH = (BigInt(totalPayoutWei || 0) / BigInt(10n ** 18n)).toString();
+
     res.json({
       success: true,
       data: {
-        walletAddress,
-        balanceWei: balance,
-        balanceETH: (BigInt(balance) / BigInt(10 ** 18)).toString(),
+        userId,
+        totalPayoutWei: totalPayoutWei?.toString() || '0',
+        totalPayoutETH,
       },
     });
   } catch (error) {
@@ -117,26 +125,34 @@ export async function getPayoutBalance(req, res) {
  */
 export async function purchasePolicy(req, res) {
   try {
-    const walletAddress = req.walletAddress;
+    const userId = req.userId;
     const { policyId } = req.params;
-    const { paymentAmount } = req.body;
 
-    if (!walletAddress) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
-        error: 'Wallet address not found in token',
+        error: 'User ID not found in token',
       });
     }
 
-    if (!policyId || !paymentAmount) {
+    if (!policyId) {
       return res.status(400).json({
         success: false,
-        error: 'Policy ID and payment amount required',
+        error: 'Policy ID required',
       });
     }
 
-    // Get user from database
-    const user = await db.getUserByWallet(walletAddress);
+    // Verify policy exists
+    const policy = await db.getPolicyById(policyId);
+    if (!policy) {
+      return res.status(404).json({
+        success: false,
+        error: 'Policy not found',
+      });
+    }
+
+    // Verify user exists
+    const user = await db.getUserById(userId);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -144,21 +160,19 @@ export async function purchasePolicy(req, res) {
       });
     }
 
-    // Purchase from contract
-    const receipt = await contractManager.purchasePolicy(policyId, paymentAmount);
+    // Create purchase record
+    const purchase = await db.createPurchase(userId, policyId, `tx_${Date.now()}`);
 
-    // Record in database
-    const purchase = await db.createPurchase(user.id, policyId, receipt.hash);
-
-    // Record transaction
-    await db.createTransaction(user.id, receipt.hash, 'policy_purchase', paymentAmount, 'confirmed');
-
-    res.json({
+    res.status(201).json({
       success: true,
       data: {
-        purchase,
-        txHash: receipt.hash,
-        blockNumber: receipt.blockNumber,
+        purchaseId: purchase.id,
+        policyId,
+        userId,
+        status: purchase.status,
+        premium: policy.premium,
+        payout: policy.payout,
+        createdAt: purchase.created_at,
       },
       message: 'Policy purchased successfully',
     });
@@ -166,7 +180,7 @@ export async function purchasePolicy(req, res) {
     console.error('Error purchasing policy:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to purchase policy',
+      error: 'Failed to purchase policy',
     });
   }
 }

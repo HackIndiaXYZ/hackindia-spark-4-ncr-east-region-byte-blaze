@@ -41,16 +41,22 @@ export async function registerUser(req, res) {
  */
 export async function getUserProfile(req, res) {
   try {
-    const walletAddress = req.walletAddress;
+    const userId = req.userId;
 
-    if (!walletAddress) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
-        error: 'Wallet address not found in token',
+        error: 'User ID not found in token',
       });
     }
 
-    const user = await db.getUserByWallet(walletAddress);
+    // Get user by ID
+    const result = await db.pool.query(
+      'SELECT id, email, wallet_address, role, created_at FROM users WHERE id = $1',
+      [userId]
+    );
+
+    const user = result.rows[0];
 
     if (!user) {
       return res.status(404).json({
@@ -63,11 +69,10 @@ export async function getUserProfile(req, res) {
       success: true,
       data: {
         id: user.id,
-        walletAddress: user.wallet_address,
         email: user.email,
+        walletAddress: user.wallet_address,
         role: user.role,
         createdAt: user.created_at,
-        updatedAt: user.updated_at,
       },
     });
   } catch (error) {
@@ -84,25 +89,16 @@ export async function getUserProfile(req, res) {
  */
 export async function getUserTransactions(req, res) {
   try {
-    const walletAddress = req.walletAddress;
+    const userId = req.userId;
 
-    if (!walletAddress) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
-        error: 'Wallet address not found in token',
+        error: 'User ID not found in token',
       });
     }
 
-    const user = await db.getUserByWallet(walletAddress);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found',
-      });
-    }
-
-    const transactions = await db.getUserTransactions(user.id);
+    const transactions = await db.getUserTransactions(userId);
 
     res.json({
       success: true,
@@ -123,25 +119,16 @@ export async function getUserTransactions(req, res) {
  */
 export async function getUserPurchases(req, res) {
   try {
-    const walletAddress = req.walletAddress;
+    const userId = req.userId;
 
-    if (!walletAddress) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
-        error: 'Wallet address not found in token',
+        error: 'User ID not found in token',
       });
     }
 
-    const user = await db.getUserByWallet(walletAddress);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found',
-      });
-    }
-
-    const purchases = await db.getUserPurchases(user.id);
+    const purchases = await db.getUserPurchases(userId);
 
     res.json({
       success: true,
