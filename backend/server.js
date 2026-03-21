@@ -5,8 +5,11 @@ import authRoutes from './routes/authRoutes.js';
 import policyRoutes from './routes/policyRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import weatherMonitorRoute from './routes/weatherRoute.js';
 import { initializeWeatherMonitoring, initializeBlockchainMonitoring } from './controllers/adminController.js';
 import { fetchWeatherData } from './utils/weatherAPI.js';
+import { initBlockchain } from './services/blockchainTriggerService.js';
+import { startWeatherCron } from './jobs/weatherJob.js';
 
 dotenv.config();
 
@@ -47,6 +50,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/policies', policyRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/weather-monitor', weatherMonitorRoute);
 
 // ==================== ERROR HANDLING ====================
 app.use((req, res) => res.status(404).json({ success: false, error: 'Route not found' }));
@@ -73,6 +77,13 @@ app.listen(PORT, () => {
   // Initialize monitoring
   initializeBlockchainMonitoring();
   initializeWeatherMonitoring();
+
+  // Initialize blockchain connection + weather auto-trigger cron
+  initBlockchain().then(ok => {
+    if (ok) console.log('✅ Blockchain trigger service ready');
+    else console.log('⚠️  Blockchain trigger service not available (check env vars)');
+  });
+  startWeatherCron();
 });
 
 export default app;

@@ -56,6 +56,7 @@ const Navbar = () => {
         <Link to="/how-it-works" style={linkStyle('/how-it-works')}>How It Works</Link>
         <Link to="/faq" style={linkStyle('/faq')}>FAQ</Link>
         <Link to="/contact" style={linkStyle('/contact')}>Contact</Link>
+        <Link to="/weather" style={linkStyle('/weather')}>🌦️ Weather</Link>
       </div>
 
       {/* Right side: Weather + Auth */}

@@ -15,6 +15,7 @@ import Dashboard from './pages/Dashboard';
 import FAQ from './pages/FAQ';
 import HowItWorks from './pages/HowItWorks';
 import Contact from './pages/Contact';
+import WeatherDashboard from './pages/WeatherDashboard';
 
 // Styles
 import './styles.css';
@@ -37,6 +38,7 @@ function App() {
               <Route path="/faq" element={<FAQ />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/weather" element={<WeatherDashboard />} />
 
               {/* Protected Routes */}
               <Route
