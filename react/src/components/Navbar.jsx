@@ -1,96 +1,103 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { weatherAPI } from '../services/api';
 
 const Navbar = () => {
-  const { isAuthenticated, user, logout, isAdmin } = useAuth();
-  const { language, toggleLanguage, t } = useLanguage();
   const location = useLocation();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const [weather, setWeather] = useState(null);
+
+  useEffect(() => {
+    // Get user's location and fetch weather
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const res = await weatherAPI.getByLocation(pos.coords.latitude, pos.coords.longitude);
+            if (res.success) setWeather(res.data);
+          } catch (e) { console.warn('Weather fetch failed'); }
+        },
+        () => {
+          // Fallback to Delhi
+          weatherAPI.getByLocation(28.7041, 77.1025)
+            .then(res => { if (res.success) setWeather(res.data); })
+            .catch(() => {});
+        }
+      );
+    }
+  }, []);
+
+  const isActive = (path) => location.pathname === path;
+
+  const linkStyle = (path) => ({
+    color: isActive(path) ? 'var(--color-primary)' : 'var(--color-text-muted)',
+    fontWeight: isActive(path) ? 700 : 500,
+    textDecoration: 'none',
+    padding: '8px 16px',
+    borderRadius: 'var(--radius-full)',
+    border: isActive(path) ? '1px solid var(--color-primary)' : '1px solid transparent',
+    transition: 'all 0.2s ease',
+    fontSize: '0.95rem',
+  });
 
   return (
     <nav className="modern-nav">
+      {/* Logo */}
       <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <span style={{ fontSize: '28px' }}>🌾</span>
-        <h1 style={{ margin: 0, fontSize: '24px', background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          InsuChain
-        </h1>
+        <span style={{ fontSize: '1.6rem' }}>🌾</span>
+        <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.3rem', color: 'var(--color-primary)' }}>InsuChain</span>
       </Link>
 
-      <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {[
-          { path: '/', label: t.navbar.home },
-          { path: '/policies', label: t.navbar.policies },
-          { path: '/how-it-works', label: t.navbar.howItWorks },
-          { path: '/faq', label: t.navbar.faq },
-          { path: '/contact', label: t.navbar.contact },
-        ].map((item) => (
-          <Link 
-            key={item.path} 
-            to={item.path}
-            className={location.pathname === item.path ? 'active' : ''}
-            style={{ 
-              padding: '8px 16px', 
-              borderRadius: '20px',
-              transition: 'background 0.3s',
-              background: location.pathname === item.path ? 'rgba(16, 185, 129, 0.1)' : 'transparent'
-            }}
-          >
-            {item.label}
-          </Link>
-        ))}
+      {/* Nav Links */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <Link to="/" style={linkStyle('/')}>Home</Link>
+        <Link to="/policies" style={linkStyle('/policies')}>Policies</Link>
+        <Link to="/how-it-works" style={linkStyle('/how-it-works')}>How It Works</Link>
+        <Link to="/faq" style={linkStyle('/faq')}>FAQ</Link>
+        <Link to="/contact" style={linkStyle('/contact')}>Contact</Link>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <button 
-          onClick={toggleLanguage}
-          style={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            padding: '8px 16px',
-            borderRadius: '20px',
-            cursor: 'pointer',
-            fontWeight: '600',
-            fontFamily: 'Outfit, sans-serif'
-          }}
-        >
-          {language === 'en' ? '🇬🇧 EN' : '🇮🇳 HI'}
-        </button>
+      {/* Right side: Weather + Auth */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Weather Widget */}
+        {weather && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '6px 14px', borderRadius: 'var(--radius-full)',
+            background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16,185,129,0.2)',
+            fontSize: '0.85rem', color: 'var(--color-text-main)', fontWeight: 500
+          }}>
+            <span style={{ fontSize: '1.1rem' }}>
+              {weather.description?.includes('rain') ? '🌧️' :
+               weather.description?.includes('cloud') ? '☁️' :
+               weather.description?.includes('clear') ? '☀️' :
+               weather.description?.includes('storm') ? '⛈️' :
+               weather.description?.includes('snow') ? '❄️' : '🌤️'}
+            </span>
+            <span>{Math.round(weather.temperature)}°C</span>
+            <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>{weather.location}</span>
+          </div>
+        )}
 
         {isAuthenticated ? (
           <>
-            <Link to="/profile" style={{ 
-              display: 'flex', alignItems: 'center', gap: '8px', 
-              textDecoration: 'none', color: 'var(--color-primary-dark)',
-              background: 'rgba(16, 185, 129, 0.1)', padding: '8px 16px', borderRadius: '20px',
-              fontWeight: 600
-            }}>
-              👤 {user?.email?.split('@')[0]}
-            </Link>
             {isAdmin && (
-              <Link to="/dashboard" style={{ textDecoration: 'none' }}>
-                <span className="text-gradient-accent" style={{ fontWeight: 600, padding: '0 8px' }}>
-                  📊 Dashboard
-                </span>
-              </Link>
+              <Link to="/dashboard" style={linkStyle('/dashboard')}>⚙️ Admin</Link>
             )}
-            <button onClick={logout} className="btn-premium" style={{ background: 'var(--gradient-dark)' }}>
-              {t.navbar.logout}
+            {!isAdmin && (
+              <Link to="/profile" style={linkStyle('/profile')}>👤 {user?.email?.split('@')[0]}</Link>
+            )}
+            <button onClick={logout} className="btn-premium" style={{ padding: '8px 20px', fontSize: '0.9rem' }}>
+              Logout
             </button>
           </>
         ) : (
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <Link to="/login" style={{ textDecoration: 'none' }}>
-              <button className="btn-premium" style={{ background: 'transparent', color: 'var(--color-primary)', border: '2px solid var(--color-primary)' }}>
-                {t.navbar.login}
-              </button>
+          <>
+            <Link to="/login" className="btn-premium" style={{ padding: '8px 20px', fontSize: '0.9rem', textDecoration: 'none' }}>
+              Login
             </Link>
-            <Link to="/register" style={{ textDecoration: 'none' }}>
-              <button className="btn-premium">
-                {t.navbar.register}
-              </button>
-            </Link>
-          </div>
+          </>
         )}
       </div>
     </nav>
