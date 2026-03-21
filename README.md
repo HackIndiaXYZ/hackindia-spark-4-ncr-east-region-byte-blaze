@@ -93,7 +93,7 @@ This results in financial loss and lack of trust in insurance systems.
 ## 👥 Team Details
 
 ### 🏷️ Team Name
-**Your Team Name (e.g., CodeKranti / HackWarriors / etc.)**
+Byte Blaze
 
 ---
 
