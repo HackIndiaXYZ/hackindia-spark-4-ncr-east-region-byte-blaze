@@ -25,9 +25,9 @@ function App() {
     <Router>
       <LanguageProvider>
         <AuthProvider>
-          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#fafafa' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
             <Navbar />
-            <main style={{ flexGrow: 1, backgroundColor: '#fafafa' }}>
+            <main style={{ flexGrow: 1, backgroundColor: 'var(--color-bg)' }}>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />

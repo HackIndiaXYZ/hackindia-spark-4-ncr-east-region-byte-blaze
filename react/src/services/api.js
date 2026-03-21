@@ -78,8 +78,8 @@ export const policyAPI = {
 
   getPayoutBalance: () => api.get('/policies/user/payout'),
 
-  purchase: (policyId, paymentAmount) =>
-    api.post(`/policies/purchase/${policyId}`, { paymentAmount }),
+  purchase: (policyId) =>
+    api.post(`/policies/purchase/${policyId}`),
 };
 
 /**

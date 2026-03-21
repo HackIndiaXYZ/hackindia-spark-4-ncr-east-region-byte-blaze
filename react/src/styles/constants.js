@@ -1,33 +1,33 @@
 /**
- * UI Constants and Style Definitions
- * Central location for all color schemes, spacing, and common style objects
+ * Premium UI Constants and Style Definitions
+ * Integrates with index.css for an 'advanced level' aesthetic
  */
 
 export const colors = {
-  primary: '#1B5E20',
-  primaryDark: '#145a1f',
-  primaryLight: '#2d7a2d',
-  accent: '#FFA500',
-  accentDark: '#e69500',
+  primary: '#10b981',
+  primaryDark: '#047857',
+  primaryLight: '#34d399',
+  accent: '#f59e0b',
+  accentDark: '#ea580c',
   success: '#10b981',
   error: '#ef4444',
   errorDark: '#dc2626',
   warning: '#f59e0b',
   info: '#3b82f6',
   text: {
-    primary: '#1f2937',
-    secondary: '#6b7280',
-    tertiary: '#9ca3af',
-    muted: '#d1d5db',
+    primary: '#0f172a',
+    secondary: '#64748b',
+    tertiary: '#94a3b8',
+    muted: '#cbd5e1',
   },
   bg: {
-    light: '#fafafa',
-    lighter: '#f9fafb',
+    light: '#f8fafc',
+    lighter: '#f1f5f9',
     white: '#ffffff',
-    overlay: 'rgba(0,0,0,0.5)',
+    overlay: 'rgba(15, 23, 42, 0.6)',
   },
-  border: '#e5e7eb',
-  borderLight: '#f0f0f0',
+  border: '#e2e8f0',
+  borderLight: '#f1f5f9',
 };
 
 export const spacing = {
@@ -35,99 +35,109 @@ export const spacing = {
   sm: '0.5rem',
   base: '1rem',
   md: '1.5rem',
-  lg: '2rem',
-  xl: '2.5rem',
-  xxl: '3rem',
-  xxxl: '4rem',
-  full: '5rem',
+  lg: '2.5rem',
+  xl: '3.5rem',
+  xxl: '5rem',
+  xxxl: '7rem',
+  full: '100%',
 };
 
 export const shadows = {
-  sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
-  base: '0 2px 8px rgba(0, 0, 0, 0.06)',
-  md: '0 4px 16px rgba(0, 0, 0, 0.08)',
-  lg: '0 8px 32px rgba(0, 0, 0, 0.1)',
-  xl: '0 12px 40px rgba(0, 0, 0, 0.12)',
-  xxl: '0 16px 48px rgba(0, 0, 0, 0.15)',
-  hover: '0 16px 32px rgba(0, 0, 0, 0.12)',
+  sm: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+  base: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)',
+  md: '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
+  lg: '0 25px 50px -12px rgba(0, 0, 0, 0.1)',
+  xl: '0 35px 60px -15px rgba(0, 0, 0, 0.15)',
+  hover: '0 20px 30px -10px rgba(16, 185, 129, 0.3)',
 };
 
 export const transitions = {
-  fast: 'all 0.2s ease',
-  base: 'all 0.3s ease',
-  slow: 'all 0.4s ease',
-  bezier: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+  fast: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+  base: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  slow: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+  bezier: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
 };
 
 export const borderRadius = {
-  sm: '6px',
-  base: '10px',
-  md: '12px',
-  lg: '16px',
+  sm: '8px',
+  base: '12px',
+  md: '16px',
+  lg: '24px',
+  xl: '32px',
   full: '9999px',
 };
 
-// Common component styles
+// Premium Component Styles (Glassmorphism & Gradients)
 export const commonStyles = {
   // Hero sections
   heroGradient: {
-    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryLight} 100%)`,
-    color: colors.bg.white,
-    paddingTop: '100px',
-    paddingBottom: '100px',
+    background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)', // Subtle gradient background
+    paddingTop: '120px',
+    paddingBottom: '120px',
     paddingLeft: spacing.md,
     paddingRight: spacing.md,
     textAlign: 'center',
+    position: 'relative',
+    overflow: 'hidden',
   },
 
-  // Card styles
+  // Card styles (Glassmorphism)
   card: {
-    backgroundColor: colors.bg.white,
+    background: 'rgba(255, 255, 255, 0.7)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
     borderRadius: borderRadius.lg,
-    border: `1px solid ${colors.borderLight}`,
-    boxShadow: shadows.base,
+    border: '1px solid rgba(255, 255, 255, 0.5)',
+    boxShadow: shadows.md,
     padding: spacing.lg,
-    transition: transitions.base,
+    transition: transitions.bezier,
   },
 
   cardHover: {
-    transform: 'translateY(-8px)',
+    transform: 'translateY(-12px) scale(1.02)',
     boxShadow: shadows.hover,
-    borderColor: colors.primary,
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+    background: 'rgba(255, 255, 255, 0.9)',
   },
 
   // Button styles
   button: (variant = 'primary') => {
     const baseButton = {
       border: 'none',
-      borderRadius: borderRadius.base,
-      fontSize: '0.95rem',
-      fontWeight: 700,
+      borderRadius: borderRadius.full,
+      fontFamily: '"Outfit", sans-serif',
+      fontSize: '1rem',
+      fontWeight: 600,
       cursor: 'pointer',
       transition: transitions.base,
-      padding: `${spacing.sm} ${spacing.md}`,
-      display: 'inline-block',
+      padding: '14px 32px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
       textDecoration: 'none',
     };
 
     if (variant === 'primary') {
       return {
         ...baseButton,
-        backgroundColor: colors.primary,
-        color: colors.bg.white,
+        background: 'linear-gradient(135deg, #10b981 0%, #047857 100%)',
+        color: '#ffffff',
+        boxShadow: shadows.sm,
       };
     }
     if (variant === 'secondary') {
       return {
         ...baseButton,
-        backgroundColor: colors.accent,
-        color: colors.primary,
+        background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
+        color: '#ffffff',
+        boxShadow: shadows.sm,
       };
     }
     if (variant === 'outline') {
       return {
         ...baseButton,
-        backgroundColor: 'transparent',
+        background: 'transparent',
         color: colors.primary,
         border: `2px solid ${colors.primary}`,
       };
@@ -135,8 +145,8 @@ export const commonStyles = {
     if (variant === 'danger') {
       return {
         ...baseButton,
-        backgroundColor: colors.error,
-        color: colors.bg.white,
+        background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+        color: '#ffffff',
       };
     }
 
@@ -146,25 +156,27 @@ export const commonStyles = {
   // Form styles
   input: {
     width: '100%',
-    padding: `${spacing.sm} ${spacing.base}`,
-    border: `1.5px solid ${colors.border}`,
+    padding: '16px 24px',
+    border: `1px solid ${colors.border}`,
     borderRadius: borderRadius.base,
     fontSize: '1rem',
-    fontFamily: 'inherit',
+    fontFamily: '"Inter", sans-serif',
     transition: transitions.base,
     boxSizing: 'border-box',
-    backgroundColor: colors.bg.white,
+    background: '#f8fafc',
+    color: colors.text.primary,
   },
 
   inputFocus: {
     borderColor: colors.primary,
-    boxShadow: `0 0 0 3px rgba(27, 94, 32, 0.1)`,
+    background: '#ffffff',
+    boxShadow: `0 0 0 4px rgba(16, 185, 129, 0.1)`,
     outline: 'none',
   },
 
   label: {
     display: 'block',
-    marginBottom: spacing.sm,
+    marginBottom: '8px',
     fontWeight: 600,
     color: colors.text.primary,
     fontSize: '0.95rem',
@@ -184,7 +196,7 @@ export const commonStyles = {
     if (type === 'error') {
       return {
         ...baseAlert,
-        backgroundColor: '#fee2e2',
+        backgroundColor: '#fef2f2',
         color: '#991b1b',
         borderColor: '#fecaca',
       };
@@ -192,69 +204,40 @@ export const commonStyles = {
     if (type === 'success') {
       return {
         ...baseAlert,
-        backgroundColor: '#dcfce7',
-        color: '#166534',
-        borderColor: '#bbf7d0',
+        backgroundColor: '#ecfdf5',
+        color: '#065f46',
+        borderColor: '#a7f3d0',
       };
     }
-    if (type === 'warning') {
-      return {
-        ...baseAlert,
-        backgroundColor: '#fef3c7',
-        color: '#92400e',
-        borderColor: '#fde68a',
-      };
-    }
-    if (type === 'info') {
-      return {
-        ...baseAlert,
-        backgroundColor: '#dbeafe',
-        color: '#1e40af',
-        borderColor: '#bfdbfe',
-      };
-    }
-
     return baseAlert;
   },
 
   // Container styles
   container: {
-    maxWidth: '1400px',
+    maxWidth: '1280px',
     margin: '0 auto',
     paddingLeft: spacing.md,
     paddingRight: spacing.md,
   },
 
   section: (bgColor = 'white') => ({
-    paddingTop: spacing.full,
-    paddingBottom: spacing.full,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.xxl,
     paddingLeft: spacing.md,
     paddingRight: spacing.md,
     backgroundColor: bgColor === 'light' ? colors.bg.light : colors.bg.white,
+    position: 'relative',
   }),
 
   grid: {
     autoFit: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
       gap: spacing.lg,
     },
-
     autofill: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-      gap: spacing.lg,
-    },
-
-    twoEqual: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: spacing.lg,
-    },
-
-    threeEqual: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
       gap: spacing.lg,
     },
   },
@@ -263,25 +246,32 @@ export const commonStyles = {
   heading: (level = 'h1') => {
     const headings = {
       h1: {
-        fontSize: 'clamp(2.5rem, 8vw, 3.5rem)',
+        fontFamily: '"Outfit", sans-serif',
+        fontSize: 'clamp(3rem, 8vw, 4.5rem)',
         fontWeight: 800,
         marginBottom: spacing.md,
-        lineHeight: 1.1,
-        letterSpacing: '-1px',
+        lineHeight: 1.05,
+        letterSpacing: '-2px',
+        color: colors.text.primary,
       },
       h2: {
-        fontSize: 'clamp(2rem, 5vw, 2.8rem)',
+        fontFamily: '"Outfit", sans-serif',
+        fontSize: 'clamp(2.5rem, 5vw, 3.2rem)',
         fontWeight: 800,
         marginBottom: spacing.md,
-        letterSpacing: '-0.5px',
+        letterSpacing: '-1px',
+        color: colors.text.primary,
       },
       h3: {
-        fontSize: '1.5rem',
+        fontFamily: '"Outfit", sans-serif',
+        fontSize: '1.8rem',
         fontWeight: 700,
         marginBottom: spacing.base,
+        letterSpacing: '-0.5px',
       },
       h4: {
-        fontSize: '1.25rem',
+        fontFamily: '"Outfit", sans-serif',
+        fontSize: '1.4rem',
         fontWeight: 700,
         marginBottom: spacing.sm,
       },
@@ -290,23 +280,25 @@ export const commonStyles = {
     return headings[level] || headings.h1;
   },
 
-  // Badge/tag styles
   badge: {
     display: 'inline-block',
-    backgroundColor: colors.accent,
-    color: colors.primary,
-    padding: `0.4rem 0.8rem`,
-    borderRadius: borderRadius.sm,
-    fontSize: '0.75rem',
+    background: 'linear-gradient(135deg, #10b981 0%, #047857 100%)',
+    color: '#ffffff',
+    padding: `0.5rem 1rem`,
+    borderRadius: borderRadius.full,
+    fontSize: '0.8rem',
     fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    boxShadow: shadows.sm,
   },
 
-  // Loading spinner
   loadingSpinner: {
     textAlign: 'center',
-    padding: spacing.full,
+    padding: spacing.xxl,
     fontSize: '1.2rem',
     color: colors.primary,
+    fontWeight: 600,
   },
 };
 
@@ -315,27 +307,4 @@ export const media = {
   mobile: '@media (max-width: 640px)',
   tablet: '@media (max-width: 1024px)',
   desktop: '@media (min-width: 1025px)',
-};
-
-// Animation keyframes as strings
-export const animations = {
-  slideDown: `@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }`,
-
-  slideUp: `@keyframes slideUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }`,
-
-  fadeIn: `@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }`,
-
-  pulse: `@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }`,
 };

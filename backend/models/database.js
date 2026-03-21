@@ -269,37 +269,55 @@ export async function updateUserWallet(userId, walletAddress) {
 }
 
 /**
- * Seed policies data
+ * Get user by ID
+ */
+export async function getUserById(userId) {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM users WHERE id = $1`,
+      [userId]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error('Error fetching user by ID:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Seed policies data (values in INR ₹)
  */
 export async function seedPolicies() {
   try {
+    // Clear old policies first
+    await pool.query(`DELETE FROM policies`);
+
     const policies = [
-      { name: 'Rainfall Insurance Basic', premium: 50000000000000000, payout: 500000000000000000, rainfall_threshold: 100, temp_min: -10, temp_max: 40 },
-      { name: 'Severe Rainfall Protection', premium: 75000000000000000, payout: 750000000000000000, rainfall_threshold: 80, temp_min: -10, temp_max: 40 },
-      { name: 'Extreme Weather Coverage', premium: 100000000000000000, payout: 1000000000000000000, rainfall_threshold: 50, temp_min: -20, temp_max: 50 },
-      { name: 'Monsoon Shield', premium: 60000000000000000, payout: 600000000000000000, rainfall_threshold: 120, temp_min: -5, temp_max: 45 },
-      { name: 'Frost Protection Plan', premium: 55000000000000000, payout: 550000000000000000, rainfall_threshold: 150, temp_min: -30, temp_max: 10 },
-      { name: 'Heat Wave Insurance', premium: 65000000000000000, payout: 650000000000000000, rainfall_threshold: 180, temp_min: 30, temp_max: 50 },
-      { name: 'Comprehensive Farm Shield', premium: 120000000000000000, payout: 1200000000000000000, rainfall_threshold: 40, temp_min: -25, temp_max: 55 },
-      { name: 'Drought Mitigation Plan', premium: 70000000000000000, payout: 700000000000000000, rainfall_threshold: 200, temp_min: 20, temp_max: 60 },
-      { name: 'Hailstorm Coverage', premium: 80000000000000000, payout: 800000000000000000, rainfall_threshold: 90, temp_min: -15, temp_max: 35 },
-      { name: 'Flood Protection Premium', premium: 90000000000000000, payout: 900000000000000000, rainfall_threshold: 60, temp_min: -10, temp_max: 45 },
-      { name: 'Seasonal Weather Guard', premium: 85000000000000000, payout: 850000000000000000, rainfall_threshold: 110, temp_min: -20, temp_max: 48 },
-      { name: 'Year-Round Farmer\'s Plan', premium: 110000000000000000, payout: 1100000000000000000, rainfall_threshold: 75, temp_min: -25, temp_max: 50 },
-      { name: 'Premium Plus Coverage', premium: 130000000000000000, payout: 1300000000000000000, rainfall_threshold: 45, temp_min: -30, temp_max: 55 },
-      { name: 'Elite Protection Package', premium: 150000000000000000, payout: 1500000000000000000, rainfall_threshold: 30, temp_min: -35, temp_max: 60 },
+      { name: 'Rainfall Insurance Basic', premium: 500, payout: 50000, rainfall_threshold: 100, temp_min: -10, temp_max: 40 },
+      { name: 'Severe Rainfall Protection', premium: 750, payout: 75000, rainfall_threshold: 80, temp_min: -10, temp_max: 40 },
+      { name: 'Extreme Weather Coverage', premium: 1000, payout: 100000, rainfall_threshold: 50, temp_min: -20, temp_max: 50 },
+      { name: 'Monsoon Shield', premium: 600, payout: 60000, rainfall_threshold: 120, temp_min: -5, temp_max: 45 },
+      { name: 'Frost Protection Plan', premium: 550, payout: 55000, rainfall_threshold: 150, temp_min: -30, temp_max: 10 },
+      { name: 'Heat Wave Insurance', premium: 650, payout: 65000, rainfall_threshold: 180, temp_min: 30, temp_max: 50 },
+      { name: 'Comprehensive Farm Shield', premium: 1200, payout: 120000, rainfall_threshold: 40, temp_min: -25, temp_max: 55 },
+      { name: 'Drought Mitigation Plan', premium: 700, payout: 70000, rainfall_threshold: 200, temp_min: 20, temp_max: 60 },
+      { name: 'Hailstorm Coverage', premium: 800, payout: 80000, rainfall_threshold: 90, temp_min: -15, temp_max: 35 },
+      { name: 'Flood Protection Premium', premium: 900, payout: 90000, rainfall_threshold: 60, temp_min: -10, temp_max: 45 },
+      { name: 'Seasonal Weather Guard', premium: 850, payout: 85000, rainfall_threshold: 110, temp_min: -20, temp_max: 48 },
+      { name: "Year-Round Farmer's Plan", premium: 1100, payout: 110000, rainfall_threshold: 75, temp_min: -25, temp_max: 50 },
+      { name: 'Premium Plus Coverage', premium: 1300, payout: 130000, rainfall_threshold: 45, temp_min: -30, temp_max: 55 },
+      { name: 'Elite Protection Package', premium: 1500, payout: 150000, rainfall_threshold: 30, temp_min: -35, temp_max: 60 },
     ];
 
     for (const policy of policies) {
       await pool.query(
         `INSERT INTO policies (name, premium, payout, rainfall_threshold, temperature_min, temperature_max, active)
-         VALUES ($1, $2, $3, $4, $5, $6, true)
-         ON CONFLICT DO NOTHING`,
+         VALUES ($1, $2, $3, $4, $5, $6, true)`,
         [policy.name, policy.premium, policy.payout, policy.rainfall_threshold, policy.temp_min, policy.temp_max]
       );
     }
     
-    console.log('✅ Policies seeded successfully');
+    console.log('✅ Policies seeded successfully (INR values)');
     return true;
   } catch (error) {
     console.error('Error seeding policies:', error.message);
@@ -346,7 +364,13 @@ export async function getPolicyById(policyId) {
 
 export async function getUserPayoutBalance(userId) {
   try {
-    const result = await pool.query;
+    const result = await pool.query(
+      `SELECT COALESCE(SUM(payout_amount), 0) as total_payout
+       FROM purchases
+       WHERE user_id = $1 AND payout_triggered = true`,
+      [userId]
+    );
+    return result.rows[0]?.total_payout || 0;
   } catch (error) {
     console.error('Error fetching user payout balance:', error.message);
     throw error;
