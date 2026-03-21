@@ -11,7 +11,7 @@
  */
 
 import express from 'express';
-import { getWeatherData, analyzeWeatherConditions } from '../services/weatherService.js';
+import { getWeatherData, getWeatherByCity, analyzeWeatherConditions } from '../services/weatherService.js';
 import * as blockchain from '../services/blockchainTriggerService.js';
 import { runWeatherCheck, getLastRunInfo } from '../jobs/weatherJob.js';
 import { authenticateJWT, requireAdmin } from '../middlewares/auth.js';
@@ -24,10 +24,17 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const lat = parseFloat(req.query.lat || process.env.DEFAULT_LATITUDE || 28.7041);
-    const lon = parseFloat(req.query.lon || process.env.DEFAULT_LONGITUDE || 77.1025);
+    let weather;
 
-    const weather = await getWeatherData(lat, lon);
+    // Support city name OR lat/lon
+    if (req.query.city) {
+      weather = await getWeatherByCity(req.query.city);
+    } else {
+      const lat = parseFloat(req.query.lat || process.env.DEFAULT_LATITUDE || 28.7041);
+      const lon = parseFloat(req.query.lon || process.env.DEFAULT_LONGITUDE || 77.1025);
+      weather = await getWeatherData(lat, lon);
+    }
+
     const analysis = analyzeWeatherConditions(weather);
 
     // Get contract stats if available

@@ -1,24 +1,16 @@
 /**
  * WeatherDashboard Page
  * =====================
- * NEW page — does NOT modify any existing pages.
- * 
- * Shows:
- *  - Live weather data (temperature, rainfall, humidity, wind)
- *  - Weather condition analysis (normal/warning/critical)
- *  - Smart contract stats (if connected)
- *  - Policy status for logged-in farmers
- *  - Auto-refresh every 60 seconds
- *  - Warning UI when rainfall < threshold
- *  - Transaction history with PolygonScan links
+ * Shows live weather data with admin location search.
+ * Admin can enter any city name to evaluate weather metrics.
+ * Auto-refreshes every 60 seconds.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://hackindia-spark-4-ncr-east-region-byte-5yx2.onrender.com/api';
 
-// Helper to format time
 const timeAgo = (iso) => {
   if (!iso) return 'Never';
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -28,7 +20,7 @@ const timeAgo = (iso) => {
 };
 
 const WeatherDashboard = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isAdmin, user } = useAuth();
   const [weather, setWeather] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [contractStats, setContractStats] = useState(null);
@@ -37,13 +29,19 @@ const WeatherDashboard = () => {
   const [error, setError] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
 
+  // Location search state
+  const [searchCity, setSearchCity] = useState('');
+  const [activeCity, setActiveCity] = useState('');
+  const [searching, setSearching] = useState(false);
+
   // Fetch weather data
-  const fetchWeather = useCallback(async () => {
+  const fetchWeather = useCallback(async (city = '') => {
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const query = city ? `?city=${encodeURIComponent(city)}` : '';
 
-      const res = await fetch(`${API_BASE}/weather-monitor`, { headers });
+      const res = await fetch(`${API_BASE}/weather-monitor${query}`, { headers });
       const json = await res.json();
 
       if (json.success) {
@@ -60,17 +58,37 @@ const WeatherDashboard = () => {
       setError('Cannot connect to weather service. Ensure backend is running.');
     } finally {
       setLoading(false);
+      setSearching(false);
     }
   }, []);
 
-  // Initial fetch + auto-refresh every 60s
+  // Initial fetch + auto-refresh
   useEffect(() => {
-    fetchWeather();
-    const interval = setInterval(fetchWeather, 60000);
+    fetchWeather(activeCity);
+    const interval = setInterval(() => fetchWeather(activeCity), 60000);
     return () => clearInterval(interval);
-  }, [fetchWeather]);
+  }, [fetchWeather, activeCity]);
 
-  // Get weather icon
+  // Handle location search
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (!searchCity.trim()) return;
+    setSearching(true);
+    setError('');
+    setActiveCity(searchCity.trim());
+    fetchWeather(searchCity.trim());
+  };
+
+  const handleReset = () => {
+    setSearchCity('');
+    setActiveCity('');
+    setLoading(true);
+    fetchWeather('');
+  };
+
+  // Suggested cities
+  const quickCities = ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Kolkata', 'Jaipur', 'Lucknow', 'Patna'];
+
   const getWeatherIcon = (condition) => {
     const icons = {
       'Clear': '☀️', 'Clouds': '☁️', 'Rain': '🌧️', 'Drizzle': '🌦️',
@@ -80,7 +98,6 @@ const WeatherDashboard = () => {
     return icons[condition] || '🌤️';
   };
 
-  // Severity colors
   const severityColor = (sev) => {
     if (sev === 'critical') return { bg: '#fef2f2', border: '#ef4444', text: '#991b1b' };
     if (sev === 'warning') return { bg: '#fffbeb', border: '#f59e0b', text: '#92400e' };
@@ -101,7 +118,7 @@ const WeatherDashboard = () => {
   return (
     <div style={{ background: 'var(--color-bg)', minHeight: '100vh', paddingBottom: 80 }}>
       {/* Hero */}
-      <div style={{ padding: '80px 24px', background: 'var(--gradient-dark)', color: 'white', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ padding: '80px 24px 60px', background: 'var(--gradient-dark)', color: 'white', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'relative', zIndex: 10 }}>
           <h1 className="animate-fade-in-up" style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', color: 'white', marginBottom: 12 }}>
             🌦️ Weather <span className="text-gradient-accent">Monitoring</span>
@@ -110,7 +127,7 @@ const WeatherDashboard = () => {
             Real-time weather tracking & automatic insurance payout triggers
           </p>
           {lastUpdated && (
-            <div style={{ marginTop: 16, fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
+            <div style={{ marginTop: 12, fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
               Last updated: {timeAgo(lastUpdated)} • Auto-refreshes every 60s
             </div>
           )}
@@ -118,6 +135,55 @@ const WeatherDashboard = () => {
       </div>
 
       <div className="page-container" style={{ marginTop: '-30px', position: 'relative', zIndex: 10 }}>
+
+        {/* ═══ LOCATION SEARCH ═══ */}
+        <div className="glass-panel animate-fade-in-up" style={{ padding: 28, marginBottom: 32 }}>
+          <h3 style={{ fontSize: '1.2rem', marginBottom: 16 }}>📍 Search Weather by Location</h3>
+          <form onSubmit={handleSearch} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            <input
+              type="text"
+              value={searchCity}
+              onChange={(e) => setSearchCity(e.target.value)}
+              placeholder="Enter city name (e.g., Delhi, Mumbai, London)..."
+              className="premium-input"
+              style={{ flex: 1, minWidth: 250 }}
+            />
+            <button type="submit" className="btn-premium" disabled={searching || !searchCity.trim()}
+              style={{ padding: '14px 28px', opacity: searching ? 0.7 : 1 }}>
+              {searching ? '⏳ Searching...' : '🔍 Search'}
+            </button>
+            {activeCity && (
+              <button type="button" onClick={handleReset}
+                style={{ padding: '14px 20px', borderRadius: 'var(--radius-full)', border: '1px solid var(--color-border)',
+                  background: 'white', cursor: 'pointer', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                ✕ Reset to Default
+              </button>
+            )}
+          </form>
+
+          {/* Quick City Buttons */}
+          <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: 600, alignSelf: 'center' }}>Quick:</span>
+            {quickCities.map(city => (
+              <button key={city} onClick={() => { setSearchCity(city); setSearching(true); setActiveCity(city); fetchWeather(city); }}
+                style={{
+                  padding: '6px 16px', borderRadius: 'var(--radius-full)', border: '1px solid var(--color-border)',
+                  background: activeCity === city ? 'var(--gradient-primary)' : 'white',
+                  color: activeCity === city ? 'white' : 'var(--color-text-muted)',
+                  cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s'
+                }}>
+                {city}
+              </button>
+            ))}
+          </div>
+
+          {activeCity && (
+            <div style={{ marginTop: 12, padding: '8px 16px', background: '#ecfdf5', borderRadius: 8, fontSize: '0.9rem', color: '#065f46' }}>
+              📍 Showing weather for: <strong>{activeCity}</strong>
+            </div>
+          )}
+        </div>
+
         {error && (
           <div className="glass-panel" style={{ padding: 20, marginBottom: 24, borderLeft: '4px solid #ef4444', background: '#fef2f2', color: '#991b1b' }}>
             ⚠️ {error}
@@ -126,7 +192,7 @@ const WeatherDashboard = () => {
 
         {weather && (
           <>
-            {/* ═══ WEATHER CONDITIONS MONITORING ═══ */}
+            {/* ═══ WEATHER ALERT ═══ */}
             {analysis && analysis.severity !== 'normal' && (
               <div className="glass-panel animate-fade-in-up" style={{
                 padding: 24, marginBottom: 32,

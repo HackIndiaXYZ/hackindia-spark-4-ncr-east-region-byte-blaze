@@ -14,6 +14,63 @@
 import axios from 'axios';
 
 const OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
+const GEOCODING_URL = 'https://api.openweathermap.org/geo/1.0/direct';
+
+/**
+ * Fetch weather by city name (geocodes automatically via OpenWeather).
+ * @param {string} cityName — e.g. "Delhi", "Mumbai, IN"
+ * @returns {Promise<Object>} Same structured weather data as getWeatherData()
+ */
+export async function getWeatherByCity(cityName) {
+  const apiKey = process.env.WEATHER_API_KEY;
+  if (!apiKey || apiKey === 'your_openweathermap_api_key') {
+    throw new Error('WEATHER_API_KEY is not configured');
+  }
+
+  try {
+    // Use the 'q' parameter to let OpenWeather resolve the city
+    const response = await axios.get(OPENWEATHER_BASE_URL, {
+      params: { q: cityName, appid: apiKey, units: 'metric' },
+      timeout: 10000,
+    });
+
+    const data = response.data;
+    const rainfall1h = data.rain?.['1h'] ?? 0;
+    const rainfall3h = data.rain?.['3h'] ?? 0;
+
+    return {
+      location: data.name || cityName,
+      country: data.sys?.country || '',
+      coordinates: { lat: data.coord?.lat, lon: data.coord?.lon },
+      temperature: data.main?.temp ?? null,
+      temperatureFeelsLike: data.main?.feels_like ?? null,
+      temperatureMin: data.main?.temp_min ?? null,
+      temperatureMax: data.main?.temp_max ?? null,
+      rainfall: rainfall1h,
+      rainfall3h: rainfall3h,
+      humidity: data.main?.humidity ?? null,
+      pressure: data.main?.pressure ?? null,
+      windSpeed: data.wind?.speed ?? 0,
+      windDeg: data.wind?.deg ?? 0,
+      cloudiness: data.clouds?.all ?? 0,
+      visibility: data.visibility ?? null,
+      condition: data.weather?.[0]?.main || 'Unknown',
+      description: data.weather?.[0]?.description || 'Unknown',
+      icon: data.weather?.[0]?.icon || '01d',
+      timestamp: new Date().toISOString(),
+      sunrise: data.sys?.sunrise ? new Date(data.sys.sunrise * 1000).toISOString() : null,
+      sunset: data.sys?.sunset ? new Date(data.sys.sunset * 1000).toISOString() : null,
+    };
+  } catch (error) {
+    if (error.response?.status === 404) {
+      throw new Error(`City "${cityName}" not found. Try a different name.`);
+    }
+    if (error.response) {
+      throw new Error(`OpenWeather API error (${error.response.status}): ${error.response.data?.message}`);
+    }
+    throw new Error(`Weather fetch failed: ${error.message}`);
+  }
+}
 
 /**
  * Fetch current weather data for a given latitude/longitude.
