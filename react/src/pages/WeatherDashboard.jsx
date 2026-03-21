@@ -8,8 +8,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-
-const API_BASE = 'https://hackindia-spark-4-ncr-east-region-byte-5yx2.onrender.com/api';
+import api from '../services/api';
 
 const timeAgo = (iso) => {
   if (!iso) return 'Never';
@@ -34,15 +33,11 @@ const WeatherDashboard = () => {
   const [activeCity, setActiveCity] = useState('');
   const [searching, setSearching] = useState(false);
 
-  // Fetch weather data
+  // Fetch weather data using the shared api instance
   const fetchWeather = useCallback(async (city = '') => {
     try {
-      const token = localStorage.getItem('token');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const query = city ? `?city=${encodeURIComponent(city)}` : '';
-
-      const res = await fetch(`${API_BASE}/weather-monitor${query}`, { headers });
-      const json = await res.json();
+      const params = city ? { city } : {};
+      const json = await api.get('/weather-monitor', { params });
 
       if (json.success) {
         setWeather(json.data.weather);
